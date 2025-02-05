@@ -1,0 +1,47 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+  branches:
+    include:
+      - main  # Or your default branch name
+
+pool:
+  vmImage: 'ubuntu-latest'  # Using an Ubuntu-based agent
+
+steps:
+  # Step 1: Checkout the code
+  - task: Checkout@2
+
+  # Step 2: Install kubectl to interact with AKS
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: 'Azure Infra  - 2025'  # Connect to your Azure subscription
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        az aks get-credentials --resource-group AKS-RG-Test --name AKS_Test --overwrite-existing
+        kubectl config use-context <AKS_TEST>
+  
+  # Step 3: Apply Kubernetes manifests (e.g., deployment.yaml, service.yaml)
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: '<Azure Infra  - 2025>'  # Azure service connection
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        kubectl apply -f k8s/deployment.yaml  # Path to your Kubernetes manifests
+        kubectl apply -f k8s/service.yaml     # If you have a service manifest
+
+  # Optionally, Step 4: Verify the deployment (check pods or services)
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: '<Azure Infra  - 2025>'  # Azure service connection
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        kubectl get pods
+        kubectl get services
+
